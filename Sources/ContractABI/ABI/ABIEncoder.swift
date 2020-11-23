@@ -42,18 +42,13 @@ class ABIEncoder {
             let encodedValue = try encode(wrapped.value, to: wrapped.type)
             return Segment(type: wrapped.type, value: encodedValue)
         }
-        // calculate start of dynamic portion in bytes (combined length of all static parts)
-        let dynamicOffsetStart = segments.map { $0.staticLength }.reduce(0, +)
+        
         // reduce to static string and dynamic string
         let (staticValues, dynamicValues) = segments.reduce(("", ""), { result, segment in
             var (staticParts, dynamicParts) = result
             if !segment.type.isDynamic {
                 staticParts += segment.encodedValue
             } else {
-                // static portion for dynamic value represents offset in bytes
-                // offset is start of dynamic segment + length of current dynamic portion (in bytes)
-                let offset = dynamicOffsetStart + (result.1.count / 2)
-                staticParts += String(offset, radix: 16).paddingLeft(toLength: 64, withPad: "0")
                 dynamicParts += segment.encodedValue
             }
             return (staticParts, dynamicParts)
